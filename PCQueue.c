@@ -25,18 +25,20 @@ static void block(PCQueue PCQ){
 }
 static void drop_tail(PCQueue PCQ){
     PCQ->tail = (PCQ->tail - 1) % (PCQ->max_size);
+    PCQ->curr_size--;
 }
 static void drop_head(PCQueue PCQ){
     PCQ->head = (PCQ->head + 1) % (PCQ->max_size);
+    PCQ->curr_size--;
 }
 static void drop_random(PCQueue PCQ){
-    time_t t;
     size_t iterations = PCQ->max_size / 4;
-    srand((unsigned) time(&t));
+    srand((unsigned) time(NULL));
     for(size_t i = 0; i < iterations; ++i){
-        size_t r = rand() % PCQ->max_size;
-        PCQ->array[r] = PCQ->array[PCQ->tail - 1];
+        size_t r = rand() % PCQ->curr_size;
+        PCQ->array[(PCQ->head + r) % PCQ->max_size] = PCQ->array[PCQ->tail - 1];
         PCQ->tail = (PCQ->tail - 1) % (PCQ->max_size);
+        PCQ->curr_size--;
     }
 }
 
@@ -93,6 +95,7 @@ PCQueue_STATUS push(PCQueue PCQ, size_t connfd){
     }
     PCQ->array[PCQ->tail] = connfd;
     PCQ->tail = (PCQ->tail + 1) % (PCQ->max_size);
+    PCQ->curr_size++;
     pthread_cond_broadcast(&PCQ->c);
     pthread_mutex_unlock(&PCQ->m);
     return PCQueue_SUCCESS;
