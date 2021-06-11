@@ -18,7 +18,27 @@ struct PCQueue_t{
     pthread_cond_t c;
 };
 
-
+static void block(PCQueue PCQ){
+    while(PCQ->curr_size == PCQ->max_size) {
+        pthread_cond_wait(&PCQ->c, &PCQ->m);
+    }
+}
+static void drop_tail(PCQueue PCQ){
+    PCQ->tail = (PCQ->tail - 1) % (PCQ->max_size);
+}
+static void drop_head(PCQueue PCQ){
+    PCQ->head = (PCQ->head + 1) % (PCQ->max_size);
+}
+static void drop_random(PCQueue PCQ){
+    time_t t;
+    size_t iterations = PCQ->max_size / 4;
+    srand((unsigned) time(&t));
+    for(size_t i = 0; i < iterations; ++i){
+        size_t r = rand() % PCQ->max_size;
+        PCQ->array[r] = PCQ->array[PCQ->tail - 1];
+        PCQ->tail = (PCQ->tail - 1) % (PCQ->max_size);
+    }
+}
 
 PCQueue initPCQueue(size_t size, SCHEDULER_ALGORITHM schedAlg){
     PCQueue PCQ = malloc(sizeof(struct PCQueue_t));
@@ -55,17 +75,27 @@ PCQueue_STATUS pop(PCQueue PCQ, size_t* connfd){
 
 PCQueue_STATUS push(PCQueue PCQ, size_t connfd){
     pthread_mutex_lock(&PCQ->m);
-
-
-
-
-
-
-
-
-
-
-
+    if(PCQ->curr_size == PCQ->max_size){
+        switch(PCQ->schedAlg){
+            case (BLOCK):
+                block(PCQ);
+                break;
+            case (DROP_TAIL):
+                drop_tail(PCQ);
+                break;
+            case (DROP_HEAD):
+                drop_head(PCQ);
+                break;
+            case (DROP_RANDOM):
+                drop_random(PCQ); // UPDATE SIZE INSIDE
+                break;
+        }
+    }
+    PCQ->array[PCQ->tail] = connfd;
+    PCQ->tail = (PCQ->tail + 1) % (PCQ->max_size);
+    pthread_cond_broadcast(&PCQ->c);
+    pthread_mutex_unlock(&PCQ->m);
+    return PCQueue_SUCCESS;
 }
 
 void PCQueue_destroy(PCQueue PCQ){
