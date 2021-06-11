@@ -11,13 +11,19 @@ typedef enum{
     PCQueue_SUCCESS,
     PCQueue_FULL,
     PCQueue_ALLOCATION_ERROR,
-    PCQueue_EMPTY,
-
+    PCQueue_EMPTY
 } PCQueue_STATUS;
+
+typedef enum{
+    BLOCK,
+    DROP_TAIL,
+    DROP_HEAD,
+    DROP_RANDOM
+} SCHEDULER_ALGORITHM;
 
 typedef struct PCQueue_t* PCQueue;
 
-PCQueue initPCQueue(size_t size);
+PCQueue initPCQueue(size_t size, SCHEDULER_ALGORITHM schedAlg);
 
 PCQueue_STATUS pop(PCQueue PCQ, size_t* connfd);
 
