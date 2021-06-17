@@ -36,8 +36,7 @@ void getargs(int* port, int* thread_count, size_t* PCQ_size, SCHEDULER_ALGORITHM
 }
 
 void Request(PCQueue PCQ){
-    size_t connfd;
-    PCQueue_STATUS ret = pop(PCQ, &connfd);
+    size_t connfd = pop(PCQ);
     requestHandle((int)connfd);
 }
 
