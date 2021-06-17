@@ -31,7 +31,7 @@ List initList(){
 
 void ListAddFirst(List list, int Data){
     if(list == NULL) return;
-    Node new_node = malloc(sizeof(*list->first));
+    Node new_node = malloc(sizeof(*new_node));
     if(new_node == NULL) return;
     list->size++;
     if(list->first == NULL){
