@@ -8,13 +8,6 @@
 #define HW3_WET_PCQUEUE_H
 
 typedef enum{
-    PCQueue_SUCCESS,
-    PCQueue_FULL,
-    PCQueue_ALLOCATION_ERROR,
-    PCQueue_EMPTY
-} PCQueue_STATUS;
-
-typedef enum{
     BLOCK,
     DROP_TAIL,
     DROP_HEAD,
@@ -25,18 +18,10 @@ typedef struct PCQueue_t* PCQueue;
 
 PCQueue initPCQueue(size_t size, SCHEDULER_ALGORITHM schedAlg);
 
-PCQueue_STATUS pop(PCQueue PCQ, size_t* connfd);
+size_t pop(PCQueue PCQ);
 
-PCQueue_STATUS push(PCQueue PCQ, size_t connfd);
+void push(PCQueue PCQ, size_t connfd);
 
 void PCQueue_destroy(PCQueue PCQ);
-
-
-
-
-
-
-
-
 
 #endif //HW3_WET_PCQUEUE_H

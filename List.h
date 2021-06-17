@@ -21,6 +21,10 @@ void ListRemoveFirst(List list);
 
 void ListRemoveByIndex(List list, int index);
 
+int ListGetSize(List list);
+
+int ListGetFirst(List list);
+
 void ListDestroy(List list);
 
 void ListPrinter(List list);

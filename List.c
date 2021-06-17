@@ -134,6 +134,17 @@ static void NodeDestroy(Node node){
     free(node);
 }
 
+int ListGetSize(List list){
+    if(list == NULL) return -1;
+    return list->size;
+}
+
+int ListGetFirst(List list){
+    if(list == NULL) return -1;
+    if(list -> first == NULL) return -1;
+    return list->first->Data;
+}
+
 void ListDestroy(List list){
     if(list == NULL) return;
     if(list -> first == NULL){
