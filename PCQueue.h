@@ -29,15 +29,6 @@ PCQueue_STATUS pop(PCQueue PCQ, size_t* connfd);
 
 PCQueue_STATUS push(PCQueue PCQ, size_t connfd);
 
-/*PCQueue_STATUS block(PCQueue PCQ);
-
-PCQueue_STATUS drop_tail(PCQueue PCQ);
-
-PCQueue_STATUS drop_head(PCQueue PCQ);
-
-PCQueue_STATUS random_drop(PCQueue PCQ);
-*/
-
 void PCQueue_destroy(PCQueue PCQ);
 
 
