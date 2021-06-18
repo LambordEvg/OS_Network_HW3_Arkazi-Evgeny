@@ -28,10 +28,12 @@ static void drop_head(PCQueue PCQ){
 }
 static void drop_random(PCQueue PCQ){
     size_t iterations = PCQ->max_size / 4;
-    srand((unsigned) time(NULL));
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    srand((unsigned)tv.tv_sec);
     for(size_t i = 0; i < iterations; ++i){
-        size_t r = rand() % ListGetSize(PCQ->list);
-        ListRemoveByIndex(PCQ->list, r);
+        size_t r = rand() % (size_t)ListGetSize(PCQ->list);
+        ListRemoveByIndex(PCQ->list, (int)r);
     }
 }
 
@@ -52,13 +54,13 @@ PCQueue initPCQueue(size_t size, SCHEDULER_ALGORITHM schedAlg){
     return PCQ;
 }
 
-size_t pop(PCQueue PCQ){
+requestWithShit pop(PCQueue PCQ){
     pthread_mutex_lock(&PCQ->m);
     while(ListGetSize(PCQ->list) == 0){
         pthread_cond_wait(&PCQ->c, &PCQ->m);
     }
-    size_t ret = ListGetFirst(PCQ->list);
-    printf("%lu is exiting the game blyat\n", ret);
+    requestWithShit ret = ListGetFirst(PCQ->list);
+    if(DEBUG) printf("%lu is exiting the game blyat\n", ret.connfd);
     ListRemoveFirst(PCQ->list);
     PCQ->max_size--;
     pthread_cond_broadcast(&PCQ->c);
@@ -66,7 +68,7 @@ size_t pop(PCQueue PCQ){
     return ret;
 }
 
-void push(PCQueue PCQ, size_t connfd){
+void push(PCQueue PCQ, requestWithShit connfd){
     pthread_mutex_lock(&PCQ->m);
     if(ListGetSize(PCQ->list) == PCQ->max_size){
         switch(PCQ->schedAlg){

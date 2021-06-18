@@ -5,6 +5,7 @@
 #include "List.h"
 #include "stdlib.h"
 #include "stdio.h"
+#include "PCQueue.h"
 
 struct list_t{
     Node first;
@@ -15,28 +16,43 @@ struct list_t{
 struct node_t{
     Node next;
     Node prev;
-    int Data;
+    requestWithShit Data;
 };
+
+static void List_ErrorHandler(){
+    while(1){
+        printf("Error!!!!\n");
+    }
+}
 
 List initList(){
     List list = malloc(sizeof(*list));
     if(list == NULL){
-        return NULL;
-    }
+        printf("WHY ALLOCATION FAILED, WHY?\n");
+        List_ErrorHandler();
+    };
     list->first = NULL;
     list->last = NULL;
     list->size = 0;
     return list;
 }
 
-void ListAddFirst(List list, int Data){
-    if(list == NULL) return;
+void ListAddFirst(List list, requestWithShit Data){
+    if(list == NULL){
+        printf("WHY YOU GAVE ME NULL LIST, WHY?\n");
+        List_ErrorHandler();
+    };
     Node new_node = malloc(sizeof(*new_node));
     if(new_node == NULL) return;
     list->size++;
     if(list->first == NULL){
         list->first = new_node;
-        list->first->Data = Data;
+        list->first->Data.connfd = Data.connfd;
+        list->first->Data.type = Data.type;
+        list->first->Data.arrival_sec = Data.arrival_sec;
+        list->first->Data.arrival_usec = Data.arrival_usec;
+        list->first->Data.dispatch_sec = Data.dispatch_sec;
+        list->first->Data.dispatch_usec = Data.dispatch_usec;
         list->first->next = NULL;
         list->first->prev = NULL;
         list->last = list->first;
@@ -45,18 +61,31 @@ void ListAddFirst(List list, int Data){
     new_node->next = list->first;
     list->first->prev = new_node;
     new_node->prev = NULL;
-    new_node->Data = Data;
+    new_node->Data.connfd = Data.connfd;
+    new_node->Data.type = Data.type;
+    new_node->Data.arrival_sec = Data.arrival_sec;
+    new_node->Data.arrival_usec = Data.arrival_usec;
+    new_node->Data.dispatch_sec = Data.dispatch_sec;
+    new_node->Data.dispatch_usec = Data.dispatch_usec;
     list->first = new_node;
 }
 
-void ListAddLast(List list, int Data){
-    if(list == NULL) return;
+void ListAddLast(List list, requestWithShit Data){
+    if(list == NULL){
+        printf("WHY YOU GAVE ME NULL LIST, WHY?\n");
+        List_ErrorHandler();
+    };
     Node new_node = malloc(sizeof(*new_node));
     if(new_node == NULL) return;
     list->size++;
     if(list->first == NULL){
         list->first = new_node;
-        list->first->Data = Data;
+        list->first->Data.connfd = Data.connfd;
+        list->first->Data.type = Data.type;
+        list->first->Data.arrival_sec = Data.arrival_sec;
+        list->first->Data.arrival_usec = Data.arrival_usec;
+        list->first->Data.dispatch_sec = Data.dispatch_sec;
+        list->first->Data.dispatch_usec = Data.dispatch_usec;
         list->first->next = NULL;
         list->first->prev = NULL;
         list->last = list->first;
@@ -66,12 +95,24 @@ void ListAddLast(List list, int Data){
     new_node->prev = list->last;
     list->last = new_node;
     list->last -> next = NULL;
-    list->last->Data = Data;
+    list->last->Data.connfd = Data.connfd;
+    list->last->Data.type = Data.type;
+    list->last->Data.arrival_sec = Data.arrival_sec;
+    list->last->Data.arrival_usec = Data.arrival_usec;
+    list->last->Data.dispatch_sec = Data.dispatch_sec;
+    list->last->Data.dispatch_usec = Data.dispatch_usec;
+
 }
 
 void ListRemoveLast(List list){
-    if(list == NULL) return;
-    if(list->first == NULL) return;
+    if(list == NULL){
+        printf("WHY YOU GAVE ME NULL LIST, WHY?\n");
+        List_ErrorHandler();
+    };
+    if(list -> first == NULL){
+        printf("WHY YOU GAVE ME AN EMPTY LIST, WHY?\n");
+        List_ErrorHandler();
+    };
     list->size--;
     if(list->last->prev == NULL){
         free(list->last);
@@ -86,8 +127,14 @@ void ListRemoveLast(List list){
 }
 
 void ListRemoveFirst(List list){
-    if(list == NULL) return;
-    if(list->first == NULL) return;
+    if(list == NULL){
+        printf("WHY YOU GAVE ME NULL LIST, WHY?\n");
+        List_ErrorHandler();
+    };
+    if(list -> first == NULL){
+        printf("WHY YOU GAVE ME AN EMPTY LIST, WHY?\n");
+        List_ErrorHandler();
+    };
     list->size--;
     if(list->first->next == NULL){
         free(list->first);
@@ -135,19 +182,29 @@ static void NodeDestroy(Node node){
 }
 
 int ListGetSize(List list){
-    if(list == NULL) return -1;
+    if(list == NULL){
+        printf("WHY YOU GAVE ME NULL LIST, WHY?\n");
+        List_ErrorHandler();
+    };
     return list->size;
 }
 
-int ListGetFirst(List list){
-    if(list == NULL) return -1;
-    if(list -> first == NULL) return -1;
+requestWithShit ListGetFirst(List list){
+    if(list == NULL){
+        printf("WHY YOU GAVE ME NULL LIST, WHY?\n");
+        List_ErrorHandler();
+    };
+    if(list -> first == NULL){
+        printf("WHY YOU GAVE ME AN EMPTY LIST, WHY?\n");
+        List_ErrorHandler();
+    };
     return list->first->Data;
 }
 
 void ListDestroy(List list){
-    printf("haha");
-    if(list == NULL) return;
+    if(list == NULL){
+        return;
+    };
     if(list -> first == NULL){
         free(list);
         return;
@@ -163,10 +220,17 @@ void ListPrinter(List list){
         return;
     }
     Node curr_node = list->first;
-    printf("%d ", curr_node->Data);
+    printf("FileDescriptor #%lu\n", curr_node->Data.connfd);
+    printf("Request Type is %s\n", (curr_node->Data.type == STATIC_REQUEST ? "STATIC" : "DYNAMIC"));
+    printf("Arrived At %s\n", asctime(localtime(&curr_node->Data.arrival_sec)));
+    printf("Dispatched At %s", asctime(localtime(&curr_node->Data.dispatch_sec)));
     curr_node = curr_node->next;
     while(curr_node != NULL){
-        printf("-> %d ",curr_node->Data);
+        printf("\n==============================Next NODE==============================\n");
+        printf("FileDescriptor #%lu\n",curr_node->Data.connfd);
+        printf("Request Type is %s\n", (curr_node->Data.type == STATIC_REQUEST ? "STATIC" : "DYNAMIC"));
+        printf("Arrived At %s\n", asctime(localtime(&curr_node->Data.arrival_sec)));
+        printf("Dispatched At %s", asctime(localtime(&curr_node->Data.dispatch_sec)));
         curr_node = curr_node->next;
     }
     printf("\n");
