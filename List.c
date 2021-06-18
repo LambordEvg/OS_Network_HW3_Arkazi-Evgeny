@@ -146,6 +146,7 @@ int ListGetFirst(List list){
 }
 
 void ListDestroy(List list){
+    printf("haha");
     if(list == NULL) return;
     if(list -> first == NULL){
         free(list);
