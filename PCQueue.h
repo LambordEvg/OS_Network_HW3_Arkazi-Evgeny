@@ -22,6 +22,8 @@ size_t pop(PCQueue PCQ);
 
 void push(PCQueue PCQ, size_t connfd);
 
+void PCQueue_update_size(PCQueue PCQ);
+
 void PCQueue_destroy(PCQueue PCQ);
 
 #endif //HW3_WET_PCQUEUE_H

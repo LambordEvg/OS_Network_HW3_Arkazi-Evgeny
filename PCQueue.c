@@ -60,6 +60,7 @@ size_t pop(PCQueue PCQ){
     size_t ret = ListGetFirst(PCQ->list);
     printf("%lu is exiting the game blyat\n", ret);
     ListRemoveFirst(PCQ->list);
+    PCQ->max_size--;
     pthread_cond_broadcast(&PCQ->c);
     pthread_mutex_unlock(&PCQ->m);
     return ret;
@@ -86,6 +87,13 @@ void push(PCQueue PCQ, size_t connfd){
     ListAddLast(PCQ->list, connfd);
     pthread_cond_broadcast(&PCQ->c);
     pthread_mutex_unlock(&PCQ->m);
+}
+
+void PCQueue_update_size(PCQueue PCQ){
+    pthread_mutex_lock(&PCQ->m);
+    PCQ->max_size++;
+    pthread_mutex_unlock(&PCQ->m);
+
 }
 
 void PCQueue_destroy(PCQueue PCQ){

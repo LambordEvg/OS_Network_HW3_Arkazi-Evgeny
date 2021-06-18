@@ -42,9 +42,13 @@ void getargs(int* port, int* thread_count, size_t* PCQ_size, SCHEDULER_ALGORITHM
     else *schedalg = DROP_RANDOM;
 }
 
-void Request(PCQueue PCQ){
-    size_t connfd = pop(PCQ);
-    requestHandle((int)connfd);
+void* Request(void* PCQ){
+    while(true) {
+        size_t connfd = pop((PCQueue)PCQ);
+        requestHandle((int) connfd);
+        PCQueue_update_size((PCQueue)PCQ);
+    }
+    return NULL;
 }
 
 int main(int argc, char *argv[])
@@ -62,6 +66,10 @@ int main(int argc, char *argv[])
     getargs(&port, &thread_count, &PCQ_size, &schedalg, argc, argv);
 
     PCQueue PCQ = initPCQueue(PCQ_size, schedalg);
+    pthread_t* Workers = malloc(sizeof(pthread_t)*thread_count);
+    for(int i = 0; i < thread_count; ++i){
+        pthread_create(Workers + i, NULL, Request, (void*) PCQ);
+    }
 
     listenfd = Open_listenfd(port);
     while (1) {
@@ -70,7 +78,10 @@ int main(int argc, char *argv[])
     push(PCQ, (size_t)connfd);
 	Close(connfd);
     }
-
+    for(int i = 0; i < thread_count; ++i){
+        pthread_join(Workers[i], NULL);
+    }
+    PCQueue_destroy(PCQ);
 }
 
 typedef struct{
