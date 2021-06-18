@@ -48,6 +48,7 @@ void* Request(void* PCQ){
         printf("Vasya 2 handeling %lu\n", connfd);
         requestHandle((int) connfd);
         PCQueue_update_size((PCQueue)PCQ);
+        Close(connfd);
     }
     return NULL;
 }
@@ -78,7 +79,6 @@ int main(int argc, char *argv[])
 	    connfd = Accept(listenfd, (SA *)&clientaddr, (socklen_t *) &clientlen);
 	    printf("vasya %d\n", connfd);
         push(PCQ, (size_t)connfd);
-	    Close(connfd);
     }
     for(int i = 0; i < thread_count; ++i){
         pthread_join(Workers[i], NULL);
