@@ -45,6 +45,7 @@ void getargs(int* port, int* thread_count, size_t* PCQ_size, SCHEDULER_ALGORITHM
 void* Request(void* PCQ){
     while(true) {
         size_t connfd = pop((PCQueue)PCQ);
+        printf("Vasya 2 handeling %lu\n", connfd);
         requestHandle((int) connfd);
         PCQueue_update_size((PCQueue)PCQ);
     }
@@ -58,10 +59,10 @@ int main(int argc, char *argv[])
     SCHEDULER_ALGORITHM schedalg;
     struct sockaddr_in clientaddr;
 
-    if(!test_PCQueue()){
+    /*if(!test_PCQueue()){
         printf("hehehe\n");
         exit(9000);
-    }
+    }*/
 
     getargs(&port, &thread_count, &PCQ_size, &schedalg, argc, argv);
 
@@ -73,10 +74,11 @@ int main(int argc, char *argv[])
 
     listenfd = Open_listenfd(port);
     while (1) {
-	clientlen = sizeof(clientaddr);
-	connfd = Accept(listenfd, (SA *)&clientaddr, (socklen_t *) &clientlen);
-    push(PCQ, (size_t)connfd);
-	Close(connfd);
+	    clientlen = sizeof(clientaddr);
+	    connfd = Accept(listenfd, (SA *)&clientaddr, (socklen_t *) &clientlen);
+	    printf("vasya %d\n", connfd);
+        push(PCQ, (size_t)connfd);
+	    Close(connfd);
     }
     for(int i = 0; i < thread_count; ++i){
         pthread_join(Workers[i], NULL);
