@@ -126,37 +126,48 @@ void ListRemoveLast(List list){
     list->last->next = NULL;
 }
 
-void ListRemoveFirst(List list){
+requestWithShit ListRemoveFirst(List list){
     if(list == NULL){
         printf("WHY YOU GAVE ME NULL LIST, WHY?\n");
         List_ErrorHandler();
-    };
+    }
     if(list -> first == NULL){
         printf("WHY YOU GAVE ME AN EMPTY LIST, WHY?\n");
         List_ErrorHandler();
-    };
+    }
+
+    requestWithShit res = {0};
     list->size--;
     if(list->first->next == NULL){
+        res = list->first->Data;
         free(list->first);
         list->first = NULL;
         list->last = NULL;
-        return;
+        return res;
     }
     Node temp = list->first->next;
+    res = list->first->Data;
     free(list->first);
     list->first = temp;
     list->first->prev = NULL;
+    return res;
 }
 
-void ListRemoveByIndex(List list, int index){
-    if(index < 0 || index > list->size - 1 || list->size == 0) return;
+requestWithShit ListRemoveByIndex(List list, int index){
+    if(index < 0 || index > list->size - 1 || list->size == 0){
+        printf("WHY YOU TRYING TO DO SHIT, WHY?\n");
+        List_ErrorHandler();
+    }
+    requestWithShit res = {0};
     if(index == 0){
+        res = ListGetFirst(list);
         ListRemoveFirst(list);
-        return;
+        return res;
     }
     if(index == list->size - 1){
+        res = list->last->Data;
         ListRemoveLast(list);
-        return;
+        return res;
     }
     Node curr_node = list->first;
     int i = 0;
@@ -164,12 +175,14 @@ void ListRemoveByIndex(List list, int index){
         curr_node = curr_node->next;
         ++i;
     }
+    res = curr_node->Data;
     Node next = curr_node->next;
     Node prev = curr_node->prev;
     next -> prev = prev;
     prev -> next = next;
     free(curr_node);
     list->size--;
+    return res;
 }
 
 static void NodeDestroy(Node node){

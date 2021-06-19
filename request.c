@@ -5,6 +5,19 @@
 #include "segel.h"
 #include "request.h"
 
+static void printShittyStatistics(Statistics_Shit fd, char* buf){
+
+   /*===============================STATISTICS SHIT START===============================*/
+   sprintf(buf, "%sStat-Req-Arrival:: %lu.%06lu\r\n", buf, fd.arrival_sec, fd.arrival_usec);
+   sprintf(buf, "%sStat-Req-Dispatch:: %lu.%06lu\r\n", buf, fd.dispatch_sec, fd.dispatch_usec);
+   sprintf(buf, "%sStat-Thread-Id:: %lu\r\n", buf, fd.threadID);
+   sprintf(buf, "%sStat-Thread-Count:: %lu\r\n", buf, fd.threadTotalCount);
+   sprintf(buf, "%sStat-Thread-Static:: %lu\r\n", buf, fd.threadStaticCount);
+   sprintf(buf, "%sStat-Thread-Dynamic:: %lu\r\n\r\n", buf, fd.threadDynamicCount);
+   /*================================STATISTICS SHIT END================================*/
+
+}
+
 // requestError(      fd,    filename,        "404",    "Not found", "OS-HW3 Server could not find this file");
 void requestError(Statistics_Shit fd, char *cause, char *errnum, char *shortmsg, char *longmsg)
 {
@@ -17,15 +30,6 @@ void requestError(Statistics_Shit fd, char *cause, char *errnum, char *shortmsg,
    sprintf(body, "%s<p>%s: %s\r\n", body, longmsg, cause);
    sprintf(body, "%s<hr>OS-HW3 Web Server\r\n", body);
 
-   /*===============================STATISTICS SHIT START===============================*/
-   sprintf(buf, "%sStat-Req-Arrival:: %lu.%06lu\r\n", buf, fd.arrival_sec, fd.arrival_usec);
-   sprintf(buf, "%sStat-Req-Dispatch:: %lu.%06lu\r\n", buf, fd.dispatch_sec, fd.dispatch_usec);
-   sprintf(buf, "%sStat-Thread-Id:: %lu\r\n", buf, fd.threadID);
-   sprintf(buf, "%sStat-Thread-Count:: %lu\r\n", buf, fd.threadTotalCount);
-   sprintf(buf, "%sStat-Thread-Static:: %lu\r\n", buf, fd.threadStaticCount);
-   sprintf(buf, "%sStat-Thread-Dynamic:: %lu\r\n\r\n", buf, fd.threadDynamicCount);
-   /*================================STATISTICS SHIT END================================*/
-
    // Write out the header information for this response
    sprintf(buf, "HTTP/1.0 %s %s\r\n", errnum, shortmsg);
    Rio_writen(fd.reqFd, buf, strlen(buf));
@@ -33,11 +37,14 @@ void requestError(Statistics_Shit fd, char *cause, char *errnum, char *shortmsg,
 
    sprintf(buf, "Content-Type: text/html\r\n");
    Rio_writen(fd.reqFd, buf, strlen(buf));
-   printf("%s", buf);
+   //printf("%s", buf);
 
-   sprintf(buf, "Content-Length: %lu\r\n\r\n", strlen(body));
+   sprintf(buf, "Content-Length: %lu\r\n", strlen(body));
+   //Rio_writen(fd.reqFd, buf, strlen(buf));
+   //printf("%s", buf);
+
+   printShittyStatistics(fd, buf);
    Rio_writen(fd.reqFd, buf, strlen(buf));
-   printf("%s", buf);
 
    // Write out the content
    Rio_writen(fd.reqFd, body, strlen(body));
@@ -119,25 +126,21 @@ void requestServeDynamic(Statistics_Shit fd, char *filename, char *cgiargs)
    sprintf(buf, "HTTP/1.0 200 OK\r\n");
    sprintf(buf, "%sServer: OS-HW3 Web Server\r\n", buf);
 
-   /*===============================STATISTICS SHIT START===============================*/
-   sprintf(buf, "%sStat-Req-Arrival:: %lu.%06lu\r\n", buf, fd.arrival_sec, fd.arrival_usec);
-   sprintf(buf, "%sStat-Req-Dispatch:: %lu.%06lu\r\n", buf, fd.dispatch_sec, fd.dispatch_usec);
-   sprintf(buf, "%sStat-Thread-Id:: %lu\r\n", buf, fd.threadID);
-   sprintf(buf, "%sStat-Thread-Count:: %lu\r\n", buf, fd.threadTotalCount);
-   sprintf(buf, "%sStat-Thread-Static:: %lu\r\n", buf, fd.threadStaticCount);
-   sprintf(buf, "%sStat-Thread-Dynamic:: %lu\r\n\r\n", buf, fd.threadDynamicCount);
-   /*================================STATISTICS SHIT END================================*/
+   printShittyStatistics(fd, buf);
 
    Rio_writen(fd.reqFd, buf, strlen(buf));
 
-   if (Fork() == 0) {
+   pid_t son;
+   int status;
+
+   if ((son = Fork()) == 0) {
       /* Child process */
       Setenv("QUERY_STRING", cgiargs, 1);
       /* When the CGI process writes to stdout, it will instead go to the socket */
       Dup2(fd.reqFd, STDOUT_FILENO);
       Execve(filename, emptylist, environ);
    }
-   Wait(NULL);
+   WaitPid(son, &status, 0);
 }
 
 
@@ -159,16 +162,9 @@ void requestServeStatic(Statistics_Shit fd, char *filename, int filesize)
    sprintf(buf, "HTTP/1.0 200 OK\r\n");
    sprintf(buf, "%sServer: OS-HW3 Web Server\r\n", buf);
    sprintf(buf, "%sContent-Length: %d\r\n", buf, filesize);
-   sprintf(buf, "%sContent-Type: %s\r\n\r\n", buf, filetype);
+   sprintf(buf, "%sContent-Type: %s\r\n", buf, filetype);
 
-   /*===============================STATISTICS SHIT START===============================*/
-   sprintf(buf, "%sStat-Req-Arrival:: %lu.%06lu\r\n", buf, fd.arrival_sec, fd.arrival_usec);
-   sprintf(buf, "%sStat-Req-Dispatch:: %lu.%06lu\r\n", buf, fd.dispatch_sec, fd.dispatch_usec);
-   sprintf(buf, "%sStat-Thread-Id:: %lu\r\n", buf, fd.threadID);
-   sprintf(buf, "%sStat-Thread-Count:: %lu\r\n", buf, fd.threadTotalCount);
-   sprintf(buf, "%sStat-Thread-Static:: %lu\r\n", buf, fd.threadStaticCount);
-   sprintf(buf, "%sStat-Thread-Dynamic:: %lu\r\n\r\n", buf, fd.threadDynamicCount);
-   /*================================STATISTICS SHIT END================================*/
+   printShittyStatistics(fd, buf);
 
    Rio_writen(fd.reqFd, buf, strlen(buf));
 
@@ -187,6 +183,7 @@ int requestHandle(Statistics_Shit fd)
    char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE];
    char filename[MAXLINE], cgiargs[MAXLINE];
    rio_t rio;
+
 
    Rio_readinitb(&rio, fd.reqFd);
    Rio_readlineb(&rio, buf, MAXLINE);

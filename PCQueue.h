@@ -9,8 +9,6 @@
 #ifndef HW3_WET_PCQUEUE_H
 #define HW3_WET_PCQUEUE_H
 
-#define DEBUG 1
-
 typedef enum{
     STATIC_REQUEST,
     DYNAMIC_REQUEST,

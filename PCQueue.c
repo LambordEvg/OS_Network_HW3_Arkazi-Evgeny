@@ -6,6 +6,7 @@
 #include "pthread.h"
 #include "stdlib.h"
 #include "List.h"
+#include "segel.h"
 
 struct PCQueue_t{
     List list;
@@ -20,20 +21,19 @@ static void block(PCQueue PCQ){
         pthread_cond_wait(&PCQ->c, &PCQ->m);
     }
 }
-static void drop_tail(PCQueue PCQ){
-    ListRemoveLast(PCQ->list);
-}
 static void drop_head(PCQueue PCQ){
-    ListRemoveFirst(PCQ->list);
+    requestWithShit tmp = ListRemoveFirst(PCQ->list);
+    Close((int)tmp.connfd);
 }
 static void drop_random(PCQueue PCQ){
-    size_t iterations = PCQ->max_size / 4;
+    size_t iterations = (PCQ->max_size / 4) + (PCQ->max_size % 4 ? 1 : 0);
     struct timeval tv;
     gettimeofday(&tv, NULL);
     srand((unsigned)tv.tv_sec);
     for(size_t i = 0; i < iterations; ++i){
         size_t r = rand() % (size_t)ListGetSize(PCQ->list);
-        ListRemoveByIndex(PCQ->list, (int)r);
+        requestWithShit dropped = ListRemoveByIndex(PCQ->list, (int)r);
+        Close((int)dropped.connfd);
     }
 }
 
@@ -60,7 +60,6 @@ requestWithShit pop(PCQueue PCQ){
         pthread_cond_wait(&PCQ->c, &PCQ->m);
     }
     requestWithShit ret = ListGetFirst(PCQ->list);
-    if(DEBUG) printf("%lu is exiting the game blyat\n", ret.connfd);
     ListRemoveFirst(PCQ->list);
     PCQ->max_size--;
     pthread_cond_broadcast(&PCQ->c);
@@ -70,14 +69,21 @@ requestWithShit pop(PCQueue PCQ){
 
 void push(PCQueue PCQ, requestWithShit connfd){
     pthread_mutex_lock(&PCQ->m);
+	if(PCQ->max_size == 0 && PCQ->schedAlg != BLOCK){
+        Close((int)connfd.connfd);
+        pthread_mutex_unlock(&PCQ->m);
+        return;
+    }
     if(ListGetSize(PCQ->list) == PCQ->max_size){
         switch(PCQ->schedAlg){
             case (BLOCK):
                 block(PCQ);
                 break;
             case (DROP_TAIL):
-                drop_tail(PCQ);
-                break;
+                Close(connfd.connfd);
+                pthread_cond_signal(&PCQ->c);
+                pthread_mutex_unlock(&PCQ->m);
+                return;
             case (DROP_HEAD):
                 drop_head(PCQ);
                 break;
@@ -95,11 +101,9 @@ void PCQueue_update_size(PCQueue PCQ){
     pthread_mutex_lock(&PCQ->m);
     PCQ->max_size++;
     pthread_mutex_unlock(&PCQ->m);
-
 }
 
 void PCQueue_destroy(PCQueue PCQ){
-    printf("hehe");
     if(PCQ == NULL){
         return;
     }

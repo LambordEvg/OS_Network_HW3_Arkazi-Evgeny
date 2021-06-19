@@ -19,9 +19,9 @@ void ListAddLast(List list, requestWithShit Data);
 
 void ListRemoveLast(List list);
 
-void ListRemoveFirst(List list);
+requestWithShit ListRemoveFirst(List list);
 
-void ListRemoveByIndex(List list, int index);
+requestWithShit ListRemoveByIndex(List list, int index);
 
 int ListGetSize(List list);
 
